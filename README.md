@@ -51,10 +51,15 @@ let 's check it with your Browser
 ## **Built With**
 
 vue/cli: 4.5.12
+
 bootstrap: 4.6.0
+
 moment: 2.29.1
+
 uuid: 3.4.0
+
 vue: 3.0.0
+
 vue-router: 4.0.0-0
 
 
