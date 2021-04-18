@@ -16,9 +16,8 @@
           class="form-control"
           placeholder="name"
           autocomplete="username"
-          required
           autofocus
-        >
+        />
       </div>
       <div class="form-label-group mb-2">
         <label for="email">Email</label>
@@ -30,8 +29,7 @@
           class="form-control"
           placeholder="email"
           autocomplete="email"
-          required
-        >
+        />
       </div>
 
       <div class="form-label-group mb-3">
@@ -44,8 +42,7 @@
           class="form-control"
           placeholder="Password"
           autocomplete="new-password"
-          required
-        >
+        />
       </div>
 
       <div class="form-label-group mb-3">
@@ -58,17 +55,12 @@
           class="form-control"
           placeholder="Password"
           autocomplete="new-password"
-          required
-        >
+        />
       </div>
 
-      <button
-        class="btn btn-lg btn-primary btn-block mb-3"
-        type="submit"
-      >
+      <button class="btn btn-lg btn-primary btn-block mb-3" type="submit">
         Submit
       </button>
-
       <div class="text-center mb-3">
         <p>
           <router-link to="/signin">
@@ -85,7 +77,10 @@
 </template>
 
 <script>
+import authorizationAPI from './../apis/authorization'
+import { Toast } from './../utils/helpers'
 export default {
+  name: 'SignUp',
   data () {
     return {
       name: '',
@@ -95,18 +90,58 @@ export default {
     }
   },
   methods: {
-    handleSubmit (e) {
-      const data = JSON.stringify({
-        email: this.email,
-        password: this.password,
-        name: this.name,
-        passwordCheck: this.passwordCheck
-      })
-      if (this.password === this.passwordCheck) {
-        // 向後端驗證使用者登入資訊是否合法
-        console.log('data', data)
-      } else {
-        console.log('please confirm your password again!')
+    async handleSubmit (e) {
+      try {
+        // 驗證表單是否都已填寫
+        if (
+          !this.name ||
+          !this.email ||
+          !this.password ||
+          !this.passwordCheck
+        ) {
+          Toast.fire({
+            icon: 'warning',
+            title: '欄位不得留空'
+          })
+        }
+
+        // 驗證密碼是否輸入有誤
+        if (this.password !== this.passwordCheck) {
+          Toast.fire({
+            icon: 'warning',
+            title: '密碼確認有誤'
+          })
+          this.password = ''
+          this.passwordCheck = ''
+          return
+        }
+
+        // 向資料透過api送進伺服器
+        const { data } = await authorizationAPI.signUp({
+          name: this.name,
+          email: this.email,
+          password: this.password,
+          passwordCheck: this.password
+        })
+
+        // 驗證API是否正常運行
+        if (data.status === 'error') {
+          throw new Error(data.message)
+        }
+
+        // 顯示成功
+        Toast.fire({
+          icon: 'success',
+          title: data.message
+        })
+
+        this.$router.push('/signin')
+      } catch (e) {
+        console.log(e)
+        Toast.fire({
+          icon: 'warning',
+          title: `無法註冊 - ${e.message}`
+        })
       }
     }
   }

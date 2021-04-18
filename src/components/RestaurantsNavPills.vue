@@ -4,6 +4,8 @@
       <router-link
         class="nav-link"
         :to="{ name: 'restaurants' }"
+        :class="$route.fullPath === `/${$route.name}` ? 'active' : ''"
+        exact-active-class=""
       >
         全部
       </router-link>
@@ -16,9 +18,11 @@
       <router-link
         class="nav-link"
         :to="{
-          name: 'restaurants',
+          path: 'restaurants',
           query: { categoryId: category.id }
           }"
+        :class="$route.fullPath.startsWith(`/${$route.name}`) && $route.query.categoryId == category.id ? 'active' : ''"
+        exact-active-class=""
       >
         {{ category.name }}
       </router-link>
