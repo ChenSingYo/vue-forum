@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import NotFound from '../views/NotFound.vue'
 import SignIn from '../views/SignIn.vue'
 import Restaurants from '../views/Restaurants.vue'
+import store from './../store'
 
 const routes = [
   {
@@ -59,7 +60,7 @@ const routes = [
   },
   {
     path: '/restaurants/:id/dashboard',
-    name: 'restaurants-dashboard',
+    name: 'restaurant-dashboard',
     component: () => import('../views/RestaurantsDashboard.vue')
   },
   {
@@ -111,6 +112,12 @@ const router = createRouter({
   linkExactActiveClass: 'active',
   history: createWebHistory(),
   routes
+})
+
+router.beforeEach((to, from, next) => {
+  // 發動vuex裡actions的methods
+  store.dispatch('fetchCurrentUser')
+  next()
 })
 
 export default router

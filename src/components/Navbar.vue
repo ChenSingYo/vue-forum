@@ -54,42 +54,11 @@
 </template>
 
 <script>
-// 模擬API回傳的內容
-const dummyUser = {
-  currentUser: {
-    id: 1,
-    name: '管理者',
-    email: 'root@example.com',
-    image: 'https://i.pravatar.cc/300',
-    isAdmin: true
-  },
-  isAuthenticated: true
-}
-
+// 將state裡的currentUser資料從Vuex取出
+import { mapState } from 'vuex'
 export default {
-  data () {
-    return {
-      currentUser: {
-        id: -1,
-        name: '',
-        email: '',
-        image: '',
-        isAdmin: false
-      },
-      isAuthenticated: false
-    }
-  },
-  methods: {
-    fetchUser () {
-      this.currentUser = {
-        ...this.currentUser,
-        ...dummyUser.currentUser // 從api拉取的資料會蓋過預設資料
-      }
-      this.isAuthenticated = dummyUser.isAuthenticated
-    }
-  },
-  created () {
-    this.fetchUser()
+  computed: {
+    ...mapState(['currentUser', 'isAuthenticated'])
   }
 }
 </script>
