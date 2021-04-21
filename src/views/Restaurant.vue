@@ -2,19 +2,19 @@
   <div class="container py-5">
     <Spinner v-if="isLoading" />
     <template v-else>
-    <!-- 餐廳資訊頁 RestaurantDetail -->
-    <RestaurantDetail :initial-restaurant="restaurant" />
-    <hr />
-    <!-- 餐廳評論 RestaurantComments -->
-    <RestaurantComments
-      :restaurant-comments="restaurantComments"
-      @after-delete-comment="afterDeleteComment"
-    />
-    <!-- 新增評論 CreateComment -->
-    <CreateComment
-      :restaurant-id="restaurant.id"
-      @after-create-comment="afterCreateComment"
-    />
+      <!-- 餐廳資訊頁 RestaurantDetail -->
+      <RestaurantDetail :initial-restaurant="restaurant" />
+      <hr />
+      <!-- 餐廳評論 RestaurantComments -->
+      <RestaurantComments
+        :restaurant-comments="restaurantComments"
+        @after-delete-comment="afterDeleteComment"
+      />
+      <!-- 新增評論 CreateComment -->
+      <CreateComment
+        :restaurant-id="restaurant.id"
+        @after-create-comment="afterCreateComment"
+      />
     </template>
   </div>
 </template>
@@ -110,28 +110,28 @@ export default {
           title: '無法取得餐廳資料，請稍後再試'
         })
       }
+    },
+    afterDeleteComment (commentId) {
+      this.restaurantComments = this.restaurantComments.filter(
+        comment => comment.id !== commentId
+      )
+    },
+    afterCreateComment (payload) {
+      const { commentId, restaurantId, text } = payload
+      this.restaurantComments.push({
+        id: commentId, // 從子元件傳來
+        RestaurantId: restaurantId, // 從子元件傳來
+        User: {
+          createdAt: new Date(),
+          email: this.currentUser.email,
+          id: this.currentUser.id,
+          name: this.currentUser.name,
+          updatedAt: new Date()
+        },
+        text: text, // 從子元件傳來
+        createdAt: new Date() // 執行當下新增
+      })
     }
-  },
-  afterDeleteComment (commentId) {
-    this.restaurantComments = this.restaurantComments.filter(
-      comment => comment.id !== commentId
-    )
-  },
-  afterCreateComment (payload) {
-    const { commentId, restaurantId, text } = payload
-    this.restaurantComments.push({
-      id: commentId, // 從子元件傳來
-      RestaurantId: restaurantId, // 從子元件傳來
-      User: {
-        createdAt: new Date(),
-        email: this.currentUser.email,
-        id: this.currentUser.id,
-        name: this.currentUser.name,
-        updatedAt: new Date()
-      },
-      text: text, // 從子元件傳來
-      createdAt: new Date() // 執行當下新增
-    })
   }
 }
 </script>
