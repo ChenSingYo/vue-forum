@@ -4,7 +4,7 @@
       <div class="form-group">
         <label for="name">Name</label>
         <input
-          v-model="userProfile.name"
+          v-model="name"
           id="name"
           type="text"
           name="name"
@@ -17,8 +17,8 @@
       <div class="form-group">
         <label for="image"></label>
         <img
-          v-if="userProfile.image"
-          :src="userProfile.image"
+          v-if="image"
+          :src="image"
           width="200"
           alt="empty image"
         />
@@ -40,47 +40,92 @@
 </template>
 
 <script>
-const dummyUser = {
-  profile: {
-    id: 1,
-    name: 'user1',
-    image: 'https://i.pravatar.cc/300'
-  }
-}
+import { mapState } from 'vuex'
+import usersAPI from './../apis/users'
+import { Toast } from './../utils/helpers'
+
 export default {
   data () {
     return {
-      userProfile: {
-        id: -1,
-        image: '',
-        name: ''
-      }
+      id: 0,
+      image: '',
+      name: '',
+      email: '',
+      isProcessing: false
+    }
+  },
+  computed: {
+    ...mapState(['currentUser'])
+  },
+  // 由於 currentUser 是透過非同步的方式取得，需要透過 watch 屬性來監控當 currentUser 有變更後，
+  // 需要在呼叫一次 setUser 的方法把資料帶入該 Vue 組件內。
+  watch: {
+    currentUser (user) {
+      if (user.id === -1) return
+      const { id } = this.$route.params
+      this.setUser(id)
     }
   },
   created () {
     const { id } = this.$route.params
     this.setUser(id)
   },
+  beforeRouteUpdate (to, from, next) {
+    if (this.currentUser.id === -1) return
+    const { id } = to.params
+    this.setUser(id)
+    next()
+  },
   methods: {
     setUser (userId) {
-      const { profile } = dummyUser
-      this.userProfile = {
-        ...this.userProfile,
-        name: profile.name,
-        image: profile.image
+      const { id, image, name, email } = this.currentUser
+
+      // 在 setUser 中判斷該 currentUser 的 id 是否與路由中取得的 userId 相同，
+      // 如果不是的話，則轉址去 404，否則繼續執行 setUser
+      if (id.toString() !== userId.toString()) {
+        this.$router.push({ name: 'not-found' })
+        return
       }
+
+      this.id = id
+      this.name = name
+      this.email = email
+      this.image = image
     },
     handleFileChange (e) {
       const files = e.target.files
       if (!files.length) return
       const imageURL = window.URL.createObjectURL(files[0])
-      this.userProfile.image = imageURL
+      this.image = imageURL
     },
-    handleSubmit (e) {
-      const form = e.target
-      const formData = new FormData(form)
-      for (const [name, value] of formData.entries()) {
-        console.log(name + ':' + value)
+    async handleSubmit (e) {
+      try {
+        if (!this.name) {
+          Toast.fire({
+            icon: 'warning',
+            title: '您尚未填寫姓名'
+          })
+          return
+        }
+        // 從表單取得資料
+        const form = e.target
+        const formData = new FormData(form)
+
+        this.isProcessing = true
+
+        // 在 handleSubmit 中呼叫 usersAPI.update() 方法以更新使用者資料
+        const { data } = await usersAPI.update({
+          userId: this.id,
+          formData
+        })
+
+        if (data.status === 'error') {
+          throw new Error(data.message)
+        }
+        // 成功更新資料後轉址到使用者詳細頁
+        this.$router.push({ name: 'user', params: { id: this.id } })
+      } catch (e) {
+        console.log(e)
       }
     }
   }

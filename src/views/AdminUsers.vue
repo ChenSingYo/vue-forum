@@ -1,7 +1,7 @@
 <template>
   <div class="container py-5">
     <AdminNav />
-
+    <Spinner v-if="isLoading" />
     <table class="table">
       <thead class="thead-dark">
         <tr>
@@ -45,100 +45,74 @@
 
 <script>
 import AdminNav from './../components/AdminNav'
-
-const dummyUsers = {
-  users: [
-    {
-      id: 1,
-      name: 'root',
-      email: 'root@example.com',
-      password: '$2a$10$r5sNq7DnH82Ly.n0/QjqgOczyBgR3sQ6Yk8NSrKpJtgcJ.Kl0n81K',
-      isAdmin: true,
-      image: null,
-      createdAt: '2021-04-07T14:21:46.000Z',
-      updatedAt: '2021-04-07T14:21:46.000Z'
-    },
-    {
-      id: 2,
-      name: 'user1',
-      email: 'user1@example.com',
-      password: '$2a$10$ytpYqtTVPkE.8liOUf/ov.KnNcUMf8WNQzMqmWsIXK7x1VevkaVHy',
-      isAdmin: false,
-      image: null,
-      createdAt: '2021-04-07T14:21:46.000Z',
-      updatedAt: '2021-04-07T14:21:46.000Z'
-    },
-    {
-      id: 3,
-      name: 'user2',
-      email: 'user2@example.com',
-      password: '$2a$10$haSnB7YRouloMuOkAR.svO8hrQoT6rfMsg1SZy2hOyfT36isvc8OK',
-      isAdmin: false,
-      image: null,
-      createdAt: '2021-04-07T14:21:46.000Z',
-      updatedAt: '2021-04-07T14:21:46.000Z'
-    },
-    {
-      id: 7,
-      name: '123',
-      email: '123@123.com',
-      password: '$2a$10$r1IFjg40/wSn6sqpt5ecs.nCdNmQbcPujIjIclI8i5JrXcY5xXlI6',
-      isAdmin: false,
-      image: null,
-      createdAt: '2021-04-08T12:37:37.000Z',
-      updatedAt: '2021-04-08T12:37:37.000Z'
-    },
-    {
-      id: 17,
-      name: 'user4',
-      email: 'dexample@gmail.com',
-      password: '$2a$10$0xrN4lOd5e0.UI4p.W9ug.Stlf4IEEdZ.vtkuJpVkQvER/htZKu.S',
-      isAdmin: false,
-      image: null,
-      createdAt: '2021-04-09T15:26:17.000Z',
-      updatedAt: '2021-04-09T15:26:17.000Z'
-    },
-    {
-      id: 27,
-      name: '123',
-      email: '123@123.123',
-      password: '$2a$10$x8xj/DS39iyJS/rjutOtcuUEvJr0OeaXwMgYLS6rBM0MBROP5cIri',
-      isAdmin: false,
-      image: null,
-      createdAt: '2021-04-13T16:19:18.000Z',
-      updatedAt: '2021-04-13T16:19:18.000Z'
-    }
-  ]
-}
+import { mapState } from 'vuex'
+import adminAPI from './../apis/admin'
+import { Toast } from './../utils/helpers'
+import Spinner from './../components/Spinner'
 
 export default {
   name: 'AdminUsers',
   components: {
-    AdminNav
+    AdminNav,
+    Spinner
   },
   data () {
     return {
-      users: []
+      users: [],
+      isLoading: true
     }
+  },
+  computed: {
+    ...mapState(['currentUser'])
   },
   created () {
     this.fetchUsers()
   },
   methods: {
-    fetchUsers () {
-      const { users } = dummyUsers
-      this.users = users
-    },
-    toggleUserRole ({ userId, isAdmin }) {
-      this.users = this.users.map(user => {
-        if (user.id === userId) {
-          return {
-            ...user,
-            isAdmin: !isAdmin
-          }
+    async fetchUsers () {
+      try {
+        this.isLoading = true
+        const { data } = await adminAPI.users.get()
+
+        if (data.status === 'error') {
+          throw new Error(data.message)
         }
-        return user
-      })
+        this.users = data.users
+        this.isLoading = false
+      } catch (e) {
+        console.log(e)
+        this.isLoading = false
+        Toast.fire({
+          icon: 'error',
+          title: '無法取得會員資料，請稍後再試'
+        })
+      }
+    },
+    async toggleUserRole ({ userId, isAdmin }) {
+      try {
+        const { data } = await adminAPI.users.update({
+          userId,
+          isAdmin: (!isAdmin).toString()
+        })
+        if (data.status === 'error') {
+          throw new Error(data.message)
+        }
+        this.users = this.users.map(user => {
+          if (user.id === userId) {
+            return {
+              ...user,
+              isAdmin: !isAdmin
+            }
+          }
+          return user
+        })
+      } catch (e) {
+        console.log(e.message)
+        Toast.fire({
+          icon: 'error',
+          title: '無法更新會員角色，請稍後再試'
+        })
+      }
     }
   }
 }
